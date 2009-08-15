@@ -1,0 +1,24 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2740
+
+Vimper is a Vim based IDE, a set of plugins to enable creation of development projects. There are a lot of useful plugins available to aid development, but you need to run around to gather them. The goal is to gather a lot of these plugins into one single package and also extend them or add new plugins.
+
+Currently it supports:
+ * C++ IDE --  definition of C/C++ projects 
+(projects can also be created for developing vim plugins, mainly for demo purpose). 
+
+Current features include:
+
+* Tree based file explorer (VTreeExplore)
+* Auto generation of makefiles.
+* Integration and navigation of make errors/warnings.
+* Project Window (listing all defined projects)
+
+Update:
+* Browser to View/Navigate Class/Structure/Function definitions
+* Search files within project and navigate to search results.
+
+Goto http://vimper.sourceforge.net/ for more details and documentation. If you run into any issues or bugs it would be great if you could log them at the sourceforge project. Any feedback or suggestion also welcome.
+
+Use :helptags <install dir>/doc to add the vimdoc files and type :help Vimper to view the help documentation.
+
+Note: Currently this only works for GVim on Windows, need to fix some issue to make it work on (*)nix platform.
