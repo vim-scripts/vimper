@@ -311,7 +311,7 @@ function! s:CreateSubdirMk(dirname, deploy_dir, check_exists)
 endfunction " CreateSubdirMk()
 
 
-"" IsCppType() - 	Check if the current project root contains a Vim
+"" IsVimType() - 	Check if the current project root contains a Vim
 "                       project definition.
 "  Args :
 "  	proj_root`	--> Project Root directory
@@ -323,16 +323,16 @@ function! vimper#project#vim#functions#IsVimType(proj_root)
 
   execute "lcd " . a:proj_root
 
-  if filereadable("./Makefile") && filereadable("./project.mk")
+  if filereadable("./.vimproj")
     
-    let p_lines = readfile(a:proj_root . "./project.mk")
+    let p_lines = readfile(a:proj_root . "./.vimproj")
     if empty(p_lines)
-      throw "Invalid project definition file " . a:proj_root . "/project.mk. Contains no data."
+      throw "Invalid project definition file " . a:proj_root . "/.vimproj. Contains no data."
     endif
 
     let p_type = ""
     for line in p_lines
-      let mt = matchlist(line, '^PROJECT_TYPE\s*\:=\s*\(\S\+\)')
+      let mt = matchlist(line, '^let g\:vimperProjectType\s*=\s*\(\S\+\)')
 
       if !empty(mt)
         let p_type = mt[1]
@@ -340,13 +340,13 @@ function! vimper#project#vim#functions#IsVimType(proj_root)
       endif
     endfor
 
-    if p_type == "vim"
+    if p_type == "\"vim\""
       let retval = 1
     endif
   endif
   execute "lcd " . CWD
   return retval
-endfunction " IsCppType()
+endfunction " IsVimType()
 
 
 "" CheckIsProjectOrPart() - Check if the current forlder is part of a project.
@@ -447,7 +447,7 @@ endfunction " RemoveFromProject()
 function! vimper#project#vim#functions#CreateVimStartup(proj_root)
  
   let proj_root = a:proj_root
-  let src_home = expand('$VIMPER_HOME') . '/scripts/cpp/'
+  let src_home = expand('$VIMPER_HOME') . '/scripts/vim/'
 
   if has('win32')
     let proj_root = vimper#project#common#WinConvertPath(proj_root)

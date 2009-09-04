@@ -12,8 +12,10 @@ endif
 execute s:wSize . "vsp"
 execute "wincmd h"
 
-let proj_root = <PROJ_HOME>
+let g:vimperProjectRoot = <PROJ_HOME>
+let g:vimperProjectType = "vim"
 
-execute "cd " . proj_root
 
-execute "VTreeExplore " . proj_root
+execute "cd " . g:vimperProjectRoot
+
+execute "VTreeExplore " . g:vimperProjectRoot

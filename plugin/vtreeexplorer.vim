@@ -43,6 +43,7 @@ set cpo&vim
 command! -n=? -complete=dir VTreeExplore :call s:TreeExplorer(0, '<args>')
 command! -n=? -complete=dir VSTreeExplore :call s:TreeExplorer(1, '<args>')
 command! -n=? VmkMake :call s:Build()
+command! -n=? VTreeReop :call s:ReOpen()
 
 "" Load the makerr syntax file
 "au Syntax makerr runtime! syntax/makerr.vim
@@ -104,17 +105,18 @@ function! s:TreeExplorer(split, start) " <<<
 	" dir to start in from arg, buff dir, or pwd
 	let fname = (a:start != "") ? a:start : expand ("%:p:h")
 	let fname = (fname != "") ? fname : getcwd ()
-
+  let l:bufname = vimper#Utils#GetTabbedBufferName('TreeExplorer')
 	" construct command to open window
 	if a:split || &modified
 		" if starting with split, get split parameters from globals
 		let splitMode = (exists("g:treeExplVertical")) ? "vertical " : ""
 		let splitSize = (exists("g:treeExplWinSize")) ? g:treeExplWinSize : 20
-		let cmd = splitMode . splitSize . "new TreeExplorer"
+		let cmd = splitMode . splitSize . "new " . l:bufname
 	else
-		let cmd = "e TreeExplorer"
+		let cmd = "e " . l:bufname
 	endif
 	silent execute cmd
+  call vimper#Utils#AddLockedBuffer(l:bufname)
 
 	call s:InitWindowVars()
 
@@ -213,8 +215,10 @@ function! s:CreateNewFile()
     echo "Filename cannot be empty."
     return
   endif
-  execute ":wincmd l" 
-  execute "edit " . l:curfile . "/" .l:fname
+  call vimper#Utils#OpenInWindow(l:curfile . "/" .l:fname)
+
+  "execute ":wincmd l" 
+  "execute "edit " . l:curfile . "/" .l:fname
 endfunction " CreateNewFile()
 
 "" Build() : Execute the build command for the current project
@@ -362,6 +366,10 @@ function! s:CreateNewProject() "<<<
   let project_type = input ("Enter Project Type (cpp|vim|...): ")
   if empty(project_type)
     echo "Please enter a valid project type."
+    echo "Valid Project Types:"
+    echo "\t\t\tcpp"
+    echo "\t\t\tvcpp"
+    echo "\t\t\tvim"
     return
   endif
 
@@ -773,10 +781,12 @@ function! s:Activate(how) " <<<
 		elseif a:how == "cur"
 			exec ("tabedit " . f)
 		elseif oldwin == winnr() || (&modified && s:BufInWindows(winbufnr(winnr())) < 2)
-			wincmd p
-			exec ("new " . f)
+      call vimper#Utils#OpenInWindow(f)
+			"wincmd p
+			"exec ("new " . f)
 		else
-			exec ("edit " . f)
+      call vimper#Utils#OpenInWindow(f)
+			"exec ("edit " . f)
 		endif
 	endif
 endfunction " >>>
@@ -1054,5 +1064,28 @@ function! s:AddHeader() " <<<
 endfunction " >>>
 
 let &cpo = s:cpo_save
+let s:Explorer = {}
 
+function! s:ReOpen()
+  let l:bufname = vimper#Utils#GetTabbedBufferName('TreeExplorer')
+  let l:retval = vimper#Utils#GotoWindow(l:bufname)
+  if l:retval == 1
+    return
+  endif
+  call vimper#Utils#AddLockedBuffer(l:bufname)
+  execute "1wincmd w"
+  let wSize = 40
+  if exists("g:vimperExplorerWidth") && g:vimperExplorerWidth
+    let wSize = g:vimperExplorerWidth
+  endif
+  silent execute wSize . "vsp " . l:bufname
+  setlocal nonumber
+
+  let dir = "."
+  if exists('g:vimperProjectRoot') && !empty(g:vimperProjectRoot)
+    let dir = g:vimperProjectRoot
+  endif
+  call s:InitWithDir(dir)
+
+endfunction " s:ReOpen()
 " vim: set ts=2 sw=2 foldmethod=marker foldmarker=<<<,>>> foldlevel=2 :

@@ -10,11 +10,12 @@
 "  	proj_root     --> Project root directory.
 "  Return :		--> bool, sucess = 1, failure = 0
 function! vimper#project#cpp#functions#Build(proj_root)
+  let l:filename = vimper#Utils#GetTabbedBufferName('make')
   let l:file = vimper#project#common#ConvertPath(expand('$VIMPER_HOME') . '/scripts')
-  let l:efile = vimper#project#common#ConvertPath(expand('$TEMP') . '/make') . '.makerr'
+  let l:efile = vimper#project#common#ConvertPath(expand('$TEMP') . "/" . l:filename) . '.makerr'
 
   let makecmd =  "!cd ". vimper#project#common#ConvertPath(a:proj_root) . "&& make 2\>\&1 \| " .l:file. "/cygwin.pl 2\>\&1 > " .  l:efile
-  execute makecmd
+  call system( makecmd )
 
   if has('win32')
     let l:efile =  vimper#project#common#WinConvertPath(l:efile)
@@ -23,6 +24,7 @@ function! vimper#project#cpp#functions#Build(proj_root)
     " Move the cursor out of the explorer window 
     execute "wincmd l" 
     call vimper#project#cpp#error_buffer#Build(l:efile, "cpp")
+    call vimper#Utils#AddLockedBuffer(l:efile)
   endif
 
 endfunction " Build()
@@ -472,6 +474,10 @@ function! vimper#project#cpp#functions#CreateVimStartup(proj_root)
   if has('win32')
     let vfile = vimper#project#common#WinConvertPath(vfile)
   endif
+  if filereadable(vfile)
+    call delete(vfile)
+  endif
+
   let ilines = readfile(src_home . "/template.vimper.vim")
   if empty(ilines)
     throw "Error reading " . src_home . "/template.vimper.vim, file is empty."
@@ -479,7 +485,10 @@ function! vimper#project#cpp#functions#CreateVimStartup(proj_root)
  
   let olines = []
   for line in ilines
-    call add(olines, substitute(line, "<PROJ_HOME>", '"' . proj_root . '"', ""))
+    let nline = substitute(line, "<PROJ_HOME>", '"' . proj_root . '"', "")
+    let nline = substitute(nline, "<TAG_DIR>", proj_root, "")
+    let nline = substitute(nline, "\/\/", "\/", "")
+    call add(olines, nline)
   endfor
   
   call writefile(olines, vfile)

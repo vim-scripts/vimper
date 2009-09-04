@@ -242,3 +242,26 @@ function! vimper#project#Utils#DirectoryExists(parent, dir)
   endif
   return 0
 endfunction " DirectoryExists()
+"" GetFileName()      - Get the filename from the file path specified.
+"  Args :
+"       path            --> Parent directory to search under
+"  Return :             --> Filename or "" if directory
+function! vimper#project#Utils#GetFileName(path)
+  let l:path = a:path
+  if has('win32')
+    let l:path = vimper#project#common#WinConvertPath(a:path)
+  endif
+  let l:type = getftype(l:path)
+  if l:type != "file"
+    return ""
+  endif
+
+  let l:mt = matchlist(l:path  "[^/]*$")
+  if empty(l:mt)
+    return ""
+  endif
+  if empty(l:mt[0])
+    return ""
+  endif
+  return l:mt[0]
+endfunction " GetFileName()

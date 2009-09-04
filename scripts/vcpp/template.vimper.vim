@@ -15,12 +15,12 @@ execute s:wSize . "vsp"
 execute "wincmd h"
 
 let g:vimperProjectRoot = <PROJ_HOME>
-let g:vimperProjectType = "cpp"
+let g:vimperProjectType = "vcpp"
 
-let s:tagsFolder = vimper#project#common#WinConvertPath(g:vimperProjectRoot . "/.tags")
+let s:tagsFolder = vimper#project#common#WinConvertPath(proj_root . "/.tags")
 let s:tagsFile = s:tagsFolder . "/proj.tags"
 
-let s:tagStartDir = vimper#project#common#WinConvertPath(g:vimperProjectRoot)
+let s:tagStartDir = vimper#project#common#WinConvertPath(proj_root)
 
 set tags+=<TAG_DIR>/.tags/proj.tags
 set tags+=~/.vim/tags/cpp.tags 

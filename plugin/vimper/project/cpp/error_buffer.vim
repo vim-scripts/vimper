@@ -18,30 +18,27 @@ command! -n=? VmkPrev :call vimper#project#cpp#error_buffer#NextError(-1)
 command! -n=? VmkReop :call vimper#project#cpp#error_buffer#ReOpen()
 
 function! vimper#project#cpp#error_buffer#ReOpen()
-  let buffern = bufname(s:BufferName)
-  if bufexists(buffern)
-    let bufn = bufwinnr(buffern)
-    if bufn < 0
-      let bufn = bufnr(buffern)
-
-      if bufn >= 0
-        let l:ebSize = 40
-        if exists("g:vimperErrorBufferHeight") && g:vimperErrorBufferHeight > 0
-          let l:ebSize = g:vimperErrorBufferHeight
-        endif
-        
-        execute "wincmd l"
-        execute l:ebSize . "split"
-        execute "wincmd j"
-        execute "buffer " . s:BufferName
-        call vimper#project#cpp#error_buffer#NextError(0)
-      endif
-    else
-      execute bufn . "wincmd W"
-    endif
-
+  if empty(s:BufferName)
+    return
   endif
-  return
+
+  let l:ebSize = 40
+  if exists("g:vimperErrorBufferHeight") && g:vimperErrorBufferHeight > 0
+    let l:ebSize = g:vimperErrorBufferHeight
+  endif
+  let bufnum = vimper#Utils#CheckBufferExists(s:BufferName)
+  let wcmd =  s:ErrorFile
+  if bufnum != -1
+    let l:retval = vimper#Utils#GotoWindow(s:BufferName)
+    if l:retval == 1
+      return 0
+    else
+      let wcmd = '+buffer' . bufnum
+    endif
+  endif
+  let win_dir = 'botright '
+
+  exe 'silent! ' . win_dir . ' ' . l:ebSize . 'split ' . wcmd
 endfunction " ReOpen()
 
 "" Show() -           Show the current error file in the buffer
@@ -62,33 +59,31 @@ function! vimper#project#cpp#error_buffer#Build(errorfile, errortype)
   endif
 
   let s:BufferName = mt[0]
-  let bufopened = 0
+  let wSize = 10
+  if exists("g:vimperOutputWindowHeight") && g:vimperOutputWindowHeight
+    let wSize = g:vimperOutputWindowHeight
+  endif
 
-  if bufexists(bufname(s:BufferName))
-    let bufn = bufwinnr(bufname(s:BufferName))
-    if bufn >= 0
-      execute "bdelete! " . bufname(s:BufferName)
+  " If the tag listing temporary buffer already exists, then reuse it.
+  " Otherwise create a new buffer
+  let bufnum = vimper#Utils#CheckBufferExists(s:BufferName)
+  let wcmd = s:ErrorFile
+  if bufnum != -1
+    let l:retval = vimper#Utils#GotoWindow(s:BufferName)
+    if l:retval == 1
+      return 0
+    else
+      let wcmd = '+buffer' . bufnum
     endif
   endif
+  let win_dir = 'botright '
 
-  let l:ebSize = 40
-  if exists("g:vimperErrorBufferHeight") && g:vimperErrorBufferHeight > 0
-    let l:ebSize = g:vimperErrorBufferHeight
-  endif
+  let ocmd = win_dir . ' ' . wSize . 'split ' . wcmd
+  exe ocmd
 
-  " Load the error file
-  if !bufopened
-    execute "wincmd l"
-    execute l:ebSize . "split"
-    execute "wincmd j"
-    execute "edit " . s:ErrorFile
-    let bufn = bufwinnr(bufname(s:BufferName))
-    if bufn >= 0
-      execute bufn . "wincmd W"
-    endif
-    let bufopened = 1
-    setlocal nomodifiable
-  endif
+  setlocal nomodifiable
+  setlocal nonumber
+
   nnoremap <buffer> <cr>  :call vimper#project#cpp#error_buffer#OpenError()<cr>
   nnoremap <buffer> n     :call vimper#project#cpp#error_buffer#NextError(1)<cr>
   nnoremap <buffer> p     :call vimper#project#cpp#error_buffer#NextError(-1)<cr>
@@ -96,6 +91,7 @@ function! vimper#project#cpp#error_buffer#Build(errorfile, errortype)
   
   let s:LastErrorLine = 0
 
+  call vimper#Utils#AddLockedBuffer(s:BufferName)    
   call vimper#project#cpp#error_buffer#NextError(1)
 endfunction " Show()
 
@@ -186,8 +182,9 @@ function! vimper#project#cpp#error_buffer#OpenError()
   endif
   let s:LastErrorLine = line(".")
 
-  execute "wincmd k" 
-  execute "edit " . l:filen
+  call vimper#Utils#OpenInWindow(l:filen)
+  "execute "wincmd k" 
+  "execute "edit " . l:filen
   execute l:linen
 
   au BufRead WinEnter * set nocursorline 
